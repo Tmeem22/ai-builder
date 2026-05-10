@@ -1,0 +1,30 @@
+# Render Blueprint for AI Builder backend.
+# Apply via https://dashboard.render.com/blueprints (point it at this repo).
+# Render will build the Docker image and create a free Web Service.
+
+services:
+  - type: web
+    name: ai-builder-backend
+    runtime: docker
+    plan: free
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false           # set in the Render dashboard
+      - key: JWT_SECRET
+        generateValue: true   # Render generates and stores a strong random value
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: JWT_EXPIRES_MINUTES
+        value: "10080"
+      - key: ANTHROPIC_MODEL
+        value: claude-sonnet-4-5
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: DATABASE_URL
+        value: "sqlite:////tmp/ai_builder.db"
+      - key: PORT
+        value: "8000"
