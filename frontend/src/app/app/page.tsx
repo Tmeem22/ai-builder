@@ -35,7 +35,7 @@ export default function ProjectsPage() {
     setError(null);
     try {
       const p = await api.createProject(name.trim());
-      router.push(`/app/projects/${p.id}`);
+      router.push(`/app/project?id=${p.id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setCreating(false);
@@ -91,7 +91,7 @@ export default function ProjectsPage() {
               className="rounded-xl border border-border bg-panel hover:border-accent transition-colors"
             >
               <div className="p-4 flex items-start justify-between gap-3">
-                <Link href={`/app/projects/${p.id}`} className="flex-1 min-w-0">
+                <Link href={`/app/project?id=${p.id}`} className="flex-1 min-w-0">
                   <div className="font-medium truncate">{p.name}</div>
                   <div className="text-xs text-muted mt-1">
                     Updated {new Date(p.updated_at).toLocaleString()}

@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import { ArrowLeft, Eye, FileCode2, Send } from "lucide-react";
 import {
   api,
@@ -13,8 +14,10 @@ import {
 
 type LocalMsg = { id: string; role: "user" | "assistant"; content: string; pending?: boolean };
 
-export default function ProjectPage({ params }: { params: { id: string } }) {
-  const projectId = Number(params.id);
+function ProjectPageInner() {
+  const params = useSearchParams();
+  const router = useRouter();
+  const projectId = Number(params.get("id"));
   const [project, setProject] = useState<Project | null>(null);
   const [messages, setMessages] = useState<LocalMsg[]>([]);
   const [files, setFiles] = useState<ProjectFile[]>([]);
@@ -27,6 +30,10 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
   const refreshAll = useCallback(async () => {
+    if (!projectId) {
+      router.replace("/app");
+      return;
+    }
     try {
       const [p, msgs, fls] = await Promise.all([
         api.getProject(projectId),
@@ -48,7 +55,8 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
     } finally {
       setLoading(false);
     }
-  }, [projectId, activeFile]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId, router]);
 
   useEffect(() => {
     refreshAll();
@@ -66,7 +74,7 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
   async function onSend(e: React.FormEvent) {
     e.preventDefault();
     const text = input.trim();
-    if (!text || sending) return;
+    if (!text || sending || !projectId) return;
 
     setInput("");
     setSending(true);
@@ -276,6 +284,14 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
         )}
       </section>
     </main>
+  );
+}
+
+export default function ProjectPage() {
+  return (
+    <Suspense fallback={<div className="flex-1 flex items-center justify-center text-muted">Loading…</div>}>
+      <ProjectPageInner />
+    </Suspense>
   );
 }
 
