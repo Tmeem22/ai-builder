@@ -41,11 +41,33 @@ Open http://localhost:3000 and create an account.
 
 ## Deployment
 
-The backend is designed for Fly.io (`pyproject.toml` + auto-generated `Dockerfile`).
-The frontend builds to a static Next.js app and can be deployed anywhere that
-serves Node 18+ runtimes, or exported via `next build`.
+### Frontend
 
-`NEXT_PUBLIC_API_URL` must point to your deployed backend URL.
+`next build` with `output: "export"` produces a static site in `frontend/out/` that you can host anywhere (CDN, S3, Cloudflare Pages, devinapps, etc.). Set `NEXT_PUBLIC_API_URL` to your deployed backend URL before building.
+
+### Backend on Render (recommended)
+
+A Render Blueprint (`render.yaml`) is included at the repo root.
+
+1. Push this repo to GitHub.
+2. Go to https://dashboard.render.com/blueprints → **New Blueprint Instance** → pick the repo.
+3. Render reads `render.yaml`, builds the `backend/Dockerfile`, and creates a free Web Service.
+4. After the first deploy, open the service in the Render dashboard and set `ANTHROPIC_API_KEY` (the blueprint marks it `sync: false`, i.e. you must provide it).
+5. `JWT_SECRET` is auto-generated. `CORS_ORIGINS` defaults to `*` — tighten it to your frontend origin once you know the final URL.
+6. Health check is at `/api/health`.
+
+> SQLite lives at `/tmp/ai_builder.db` on Render Free — it resets on every deploy/restart. Add a paid disk in the dashboard or swap `DATABASE_URL` to Postgres for persistent data.
+
+### Backend on Fly.io
+
+A `fly.toml` is also included. After `flyctl auth login`:
+
+```bash
+cd backend
+fly launch --copy-config --no-deploy
+fly secrets set ANTHROPIC_API_KEY=... JWT_SECRET=$(openssl rand -hex 32)
+fly deploy
+```
 
 ## API
 
